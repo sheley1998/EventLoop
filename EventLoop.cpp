@@ -1,168 +1,144 @@
 #include "EventLoop.h"
 
-#include <iostream>
 #include <chrono>
 #include <thread>
 
-using namespace std;
-using namespace chrono;
-
-int now()
-{
-	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+int now() {
+    return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count());
 }
 
-void Vow::then(function<void()> cb)
-{
-	if (resolved)
-	{
-		cb();
-		return;
-	}
+void Vow::then(std::function<void()> cb) {
+    if (resolved) {
+        cb();
+        return;
+    }
 
-	callbacks.push_back(cb);
+    callbacks.push_back(cb);
 }
 
-void Vow::resolve()
-{
-	if (resolved)
-		return;
+void Vow::resolve() {
+    if (resolved)
+        return;
 
-	resolved = true;
+    resolved = true;
 
-	for (int i = 0; i < callbacks.size(); ++i)
-		callbacks[i]();
+    for (int i = 0; i < callbacks.size(); ++i)
+        callbacks[i]();
 }
 
-EventLoop::EventLoop()
-{
-	time = now();
+EventLoop::EventLoop() {
+    time = now();
 }
 
-Vow* EventLoop::setTimeout(int delay, function<void()> cb)
-{
-	auto vow = new Vow();
+Vow *EventLoop::setTimeout(int delay, std::function<void()> cb) {
+    auto vow = new Vow();
 
-	callbacks.push_back([=]()
-	{
-		if (!vow->resolved)
-			cb();
+    callbacks.push_back([=]() {
+        if (!vow->resolved)
+            cb();
 
-		delete vow;
-	});
+        delete vow;
+    });
 
-	callbackTimes.push_back(delay + time);
+    callbackTimes.push_back(delay + time);
 
-	return vow;
+    return vow;
 }
 
-Vow* EventLoop::setInterval(int delay, function<void()> cb)
-{
-	auto vow = new Vow();
+Vow *EventLoop::setInterval(int delay, std::function<void()> cb) {
+    auto vow = new Vow();
 
-	callbacks.push_back([=]()
-	{
-		if (vow->resolved)
-		{
-			delete vow;
-			return;
-		}
+    callbacks.push_back([=]() {
+        if (vow->resolved) {
+            delete vow;
+            return;
+        }
 
-		cb();
+        cb();
 
-		setInterval(delay, cb, vow);
-	});
+        setInterval(delay, cb, vow);
+    });
 
-	callbackTimes.push_back(delay + time);
+    callbackTimes.push_back(delay + time);
 
-	return vow;
+    return vow;
 }
 
-Vow* EventLoop::setInterval(int delay, function<void()> cb, Vow* vow)
-{
-	callbacks.push_back([=]()
-	{
-		if (vow->resolved)
-		{
-			delete vow;
-			return;
-		}
+Vow *EventLoop::setInterval(int delay, std::function<void()> cb, Vow *vow) {
+    callbacks.push_back([=]() {
+        if (vow->resolved) {
+            delete vow;
+            return;
+        }
 
-		cb();
+        cb();
 
-		setInterval(delay, cb, vow);
-	});
+        setInterval(delay, cb, vow);
+    });
 
-	callbackTimes.push_back(delay + time);
+    callbackTimes.push_back(delay + time);
 
-	return vow;
+    return vow;
 }
 
-Vow* EventLoop::nextTick(function<void()> cb)
-{
-	auto vow = new Vow();
+Vow *EventLoop::nextTick(std::function<void()> cb) {
+    auto vow = new Vow();
 
-	callbacks.push_back([=]()
-	{
-		if (!vow->resolved)
-			cb();
+    callbacks.push_back([=]() {
+        if (!vow->resolved)
+            cb();
 
-		delete vow;
-	});
+        delete vow;
+    });
 
-	callbackTimes.push_back(time);
+    callbackTimes.push_back(time);
 
-	return vow;
+    return vow;
 }
 
-void EventLoop::clearInterval(Vow* vow)
-{
-	vow->resolve();
+void EventLoop::clearInterval(Vow *vow) {
+    vow->resolve();
 }
 
-void EventLoop::clearTimeout(Vow* vow)
-{
-	vow->resolve();
+void EventLoop::clearTimeout(Vow *vow) {
+    vow->resolve();
 }
 
-void EventLoop::start()
-{
-	if (running)
-		return;
+void EventLoop::start() {
+    if (running)
+        return;
 
-	running = true;
+    running = true;
 
-	while (true)
-	{
-		if (!running)
-			break;
+    while (true) {
+        if (!running)
+            break;
 
-		++ticks;
+        ++ticks;
 
-		time = now();
+        time = now();
 
-		for (int i = 0; i < callbacks.size(); ++i)
-		{
-			int cbTime = callbackTimes[i];
+        for (int i = 0; i < callbacks.size(); ++i) {
+            int cbTime = callbackTimes[i];
 
-			if (time <= cbTime)
-				continue;
+            if (time <= cbTime)
+                continue;
 
-			callbacks[i]();
-			callbacks.erase(callbacks.begin() + i);
-			callbackTimes.erase(callbackTimes.begin() + i);
+            callbacks[i]();
+            callbacks.erase(callbacks.begin() + i);
+            callbackTimes.erase(callbackTimes.begin() + i);
 
-			--i;
-		}
+            --i;
+        }
 
-		this_thread::sleep_for(milliseconds(1));
-	}
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
 
-void EventLoop::stop()
-{
-	if (!running)
-		return;
+void EventLoop::stop() {
+    if (!running)
+        return;
 
-	running = false;
+    running = false;
 }

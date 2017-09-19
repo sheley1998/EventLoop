@@ -1,47 +1,48 @@
-#pragma once
+#ifndef EVENTLOOP
+#define EVENTLOOP
 
 #include <vector>
 #include <functional>
 
-class Vow
-{
+class Vow {
 private:
-	std::vector<std::function<void()>> callbacks;
+    std::vector<std::function<void()>> callbacks;
 
 public:
-	bool resolved = false;
+    bool resolved = false;
 
-	void then(std::function<void()> cb);
+    void then(std::function<void()> cb);
 
-	void resolve();
+    void resolve();
 };
 
-class EventLoop
-{
+class EventLoop {
 private:
-	bool running = false;
-	std::vector<std::function<void()>> callbacks;
-	std::vector<int> callbackTimes;
+    bool running = false;
+    std::vector<std::function<void()>> callbacks;
+    std::vector<int> callbackTimes;
 
 public:
-	EventLoop();
+    EventLoop();
 
-	int time = 0;
-	int ticks = 0;
+    int time = 0;
+    int ticks = 0;
 
-	Vow* setTimeout(int delay, std::function<void()> cb);
+    Vow *setTimeout(int delay, std::function<void()> cb);
 
-	Vow* setInterval(int delay, std::function<void()> cb);
+    Vow *setInterval(int delay, std::function<void()> cb);
 
-	Vow* setInterval(int delay, std::function<void()> cb, Vow* vow);
+    Vow *setInterval(int delay, std::function<void()> cb, Vow *vow);
 
-	Vow* nextTick(std::function<void()> cb);
+    Vow *nextTick(std::function<void()> cb);
 
-	void clearInterval(Vow* vow);
+    void clearInterval(Vow *vow);
 
-	void clearTimeout(Vow* vow);
+    void clearTimeout(Vow *vow);
 
-	void start();
+    void start();
 
-	void stop();
+    void stop();
 };
+
+#endif
