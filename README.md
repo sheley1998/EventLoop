@@ -3,7 +3,7 @@
 ### Getting started
 This C++11 library allows developers to create Javascript style asynchronous event loops. To use this library in your project, simply drop "EventLoop.cpp" and "EventLoop.h" into your source folder.
 
-```C++
+```C++11
 #include <iostream>
 #include "EventLoop.h"
 
